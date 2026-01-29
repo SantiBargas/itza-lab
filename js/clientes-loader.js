@@ -1,0 +1,127 @@
+/* =========================================
+   CARGA DINÁMICA DE CLIENTES (ITZA)
+========================================= */
+async function cargarSeccionClientes() {
+    try {
+        const response = await fetch('data/clientes.json');
+        const clientes = await response.json();
+
+        const $navContainer = $('.testimonial-slider-nav');
+        const $textContainer = $('.testimonial-slider');
+
+        if (!$navContainer.length || !$textContainer.length) return;
+
+        $navContainer.empty();
+        $textContainer.empty();
+
+        clientes.forEach(cliente => {
+            $navContainer.append(`
+                <div class="slider-nav">
+                    <img src="${cliente.img}" alt="${cliente.alt}" loading="lazy" decoding="async" width="260" height="260">
+                </div>
+            `);
+
+            $textContainer.append(`
+                <div class="slider-item">
+                    <h3>${cliente.nombre}</h3>
+                    <h4>${cliente.lugar}</h4>
+                </div>
+            `);
+        });
+
+        // Usar requestAnimationFrame para evitar forced reflow
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                iniciarSlidersClientes();
+            });
+        });
+
+    } catch (error) {
+        console.error("Error técnico en la carga de clientes:", error);
+    }
+}
+
+function iniciarSlidersClientes() {
+    // Evitar forced reflow: verificar que elementos existan y tengan contenido
+    const $textSlider = $('.testimonial-slider');
+    const $navSlider = $('.testimonial-slider-nav');
+    
+    if (!$textSlider.length || !$navSlider.length) return;
+    if (!$textSlider.children().length || !$navSlider.children().length) return;
+    
+    // 1. Slider de textos (Principal)
+    $textSlider.on('init reInit afterChange', function(event, slick, currentSlide) {
+        // ✅ FIX ACCESIBILIDAD: Remover tabindex de slides ocultos
+        $(this).find('.slick-slide[aria-hidden="true"]').each(function() {
+            $(this).attr('tabindex', '-1');
+            $(this).find('a, button, input').attr('tabindex', '-1');
+        });
+        
+        // Asegurar que slide visible sea enfocable
+        $(this).find('.slick-slide[aria-hidden="false"]').each(function() {
+            $(this).removeAttr('tabindex');
+            $(this).find('a, button, input').removeAttr('tabindex');
+        });
+    }).slick({
+        infinite: true,
+        autoplay: true,
+        autoplaySpeed: 4000,
+        speed: 900,
+        slidesToShow: 1,
+        asNavFor: '.testimonial-slider-nav',
+        dots: true,
+        arrows: true,
+        fade: true,
+        cssEase: 'ease-in-out',
+        pauseOnHover: true,
+        waitForAnimate: false,
+        accessibility: true
+    });
+
+    // 2. Slider de logos (Navegación con Adaptación Móvil)
+    $navSlider.on('init reInit afterChange', function(event, slick, currentSlide) {
+        // ✅ FIX ACCESIBILIDAD: Remover tabindex de slides ocultos
+        $(this).find('.slick-slide[aria-hidden="true"]').each(function() {
+            $(this).attr('tabindex', '-1');
+            $(this).find('img, a, button').attr('tabindex', '-1');
+        });
+        
+        // Asegurar que slide visible sea enfocable
+        $(this).find('.slick-slide[aria-hidden="false"]').each(function() {
+            $(this).removeAttr('tabindex');
+            $(this).find('img, a, button').removeAttr('tabindex');
+        });
+    }).slick({
+        slidesToShow: 1, 
+        centerMode: true,
+        centerPadding: '0px',
+        focusOnSelect: true,
+        asNavFor: '.testimonial-slider',
+        arrows: false,
+        infinite: true,
+        speed: 900,
+        cssEase: 'cubic-bezier(0.77, 0, 0.175, 1)',
+        waitForAnimate: false,
+        accessibility: true,
+        responsive: [
+            {
+                breakpoint: 768,
+                settings: {
+                    centerPadding: '0px',
+                    slidesToShow: 1
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    speed: 600,
+                    centerPadding: '0px'
+                }
+            }
+        ]
+    });
+}
+
+$(document).ready(function() {
+    cargarSeccionClientes();
+});
