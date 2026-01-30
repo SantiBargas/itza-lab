@@ -232,3 +232,4 @@ function loadInstagram() {
     container.innerHTML = iframeHtml;
     facade.style.display = 'none'; // Desaparece la fachada
 }
+
